@@ -6826,6 +6826,23 @@
         }
       }
     },
+    "Offline · updated %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Офлайн · обновлено %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "离线 · %@更新"
+          }
+        }
+      }
+    },
     "Offline — showing cached sessions" : {
       "extractionState" : "manual",
       "localizations" : {

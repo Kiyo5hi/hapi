@@ -118,6 +118,8 @@ final class SessionListModel {
     private(set) var isRefreshing = false
     /// Last refresh failed — show the offline state over snapshot data.
     private(set) var isOffline = false
+    /// Last successful list fetch, for the offline notice's "updated …".
+    private(set) var lastRefreshedAt: Date?
     private(set) var hasRefreshedOnce = false
     @ObservationIgnored private var hasAttemptedRefresh = false
     /// Transient row-action failure for an alert.
@@ -359,6 +361,7 @@ final class SessionListModel {
             try await sessionStore.refresh()
             reconcileFilters()
             isOffline = false
+            lastRefreshedAt = Date()
             hasRefreshedOnce = true
             do { try await machineStore.refresh() }
             catch { actionError = error.localizedDescription }
