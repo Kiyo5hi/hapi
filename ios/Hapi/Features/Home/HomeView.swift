@@ -119,7 +119,9 @@ struct HomeView: View {
             listModel.selectedSessionId = sessionId
         }
         .navigationTitle("Sessions")
-        .navigationBarTitleDisplayMode(.inline)
+        // Large title collapses on scroll (Mail/Messages) and replaces the
+        // blank band an inline title left above the first section.
+        .navigationBarTitleDisplayMode(.large)
         .modifier(SidebarTitleRemoval(isSidebar: showsSideBySide || isFoldedOuterScreen))
         .toolbar {
             ToolbarItem(placement: .topBarLeading) { settingsButton }

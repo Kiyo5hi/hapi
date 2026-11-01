@@ -65,8 +65,8 @@ enum SessionRowStatus: Equatable {
         }
     }
 
-    /// Unfilled attention symbols; running uses the native loading indicator.
-    /// Status wording/count remain available to VoiceOver in either case.
+    /// Unfilled attention symbols; running is a pulsing badge on the agent
+    /// icon. Status wording/count remain available to VoiceOver in either case.
     var symbolName: String? {
         switch self {
         case .needsReply: return "bubble.left"
@@ -257,6 +257,16 @@ final class SessionListModel {
                 await lastSeenStore.markSeen(sessionId: summary.id,
                     revision: summary.contentRevision ?? 0, serverState: summary.readState)
             }
+            if let error = lastSeenStore.persistenceError { actionError = error }
+        }
+    }
+
+    /// Swipe action: mark the observed head of one session as read.
+    func markRead(sessionId: String) {
+        guard let summary = sessionStore.sessions.first(where: { $0.id == sessionId }) else { return }
+        Task {
+            await lastSeenStore.markSeen(sessionId: summary.id,
+                revision: summary.contentRevision ?? 0, serverState: summary.readState)
             if let error = lastSeenStore.persistenceError { actionError = error }
         }
     }
