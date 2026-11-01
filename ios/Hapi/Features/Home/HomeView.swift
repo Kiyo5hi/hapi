@@ -119,9 +119,9 @@ struct HomeView: View {
             listModel.selectedSessionId = sessionId
         }
         .navigationTitle("Sessions")
-        // Large title collapses on scroll (Mail/Messages) and replaces the
-        // blank band an inline title left above the first section.
-        .navigationBarTitleDisplayMode(.large)
+        // Inline: it shares the toolbar row, so the list starts right below
+        // and Pinned/Recent headers carry the structure.
+        .navigationBarTitleDisplayMode(.inline)
         .modifier(SidebarTitleRemoval(isSidebar: showsSideBySide || isFoldedOuterScreen))
         .toolbar {
             ToolbarItem(placement: .topBarLeading) { settingsButton }
