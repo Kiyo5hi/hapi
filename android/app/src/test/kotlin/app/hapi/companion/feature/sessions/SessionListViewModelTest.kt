@@ -1,5 +1,6 @@
 package app.hapi.companion.feature.sessions
 
+import app.hapi.data.sse.ConnectionState
 import app.hapi.data.store.LastSeenStore
 import app.hapi.data.store.MachineListStore
 import app.hapi.data.store.SessionListStore
@@ -23,6 +24,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runCurrent
 
 // ------------------------------------------------------------------ fakes --
@@ -164,6 +167,7 @@ private fun TestScope.buildViewModel(
     sessions: FakeSessionStore = FakeSessionStore(),
     machines: FakeMachineStore = FakeMachineStore(),
     zoneProvider: () -> ZoneId = { ZoneId.of("UTC") },
+    connection: MutableStateFlow<ConnectionState> = MutableStateFlow(ConnectionState(ConnectionState.Phase.Connected)),
 ): Triple<SessionListViewModel, FakeSessionStore, FakeMachineStore> {
     val viewModel = SessionListViewModel(
         sessionStore = sessions,
@@ -172,6 +176,8 @@ private fun TestScope.buildViewModel(
         scope = backgroundScope,
         hubKey = "hub-test",
         zoneProvider = zoneProvider,
+        connectionState = connection,
+        nowMs = { currentTime },
     )
     return Triple(viewModel, sessions, machines)
 }
@@ -179,6 +185,50 @@ private fun TestScope.buildViewModel(
 // ------------------------------------------------------------------ tests --
 
 class SessionListViewModelTest {
+    @Test
+    fun `transient connection status appears only after the reveal delay and keeps its clock across phases`() = runTest {
+        val connection = MutableStateFlow(ConnectionState(ConnectionState.Phase.Connected))
+        val (viewModel) = buildViewModel(connection = connection)
+        runCurrent()
+        assertNull(viewModel.uiState.value.connectionStatus)
+
+        connection.value = ConnectionState(ConnectionState.Phase.Connecting)
+        advanceTimeBy(CONNECTION_REVEAL_MS - 500)
+        runCurrent()
+        assertNull(viewModel.uiState.value.connectionStatus, "A quick reconnect never flashes")
+
+        // Connecting → Backoff keeps the outage clock running.
+        connection.value = ConnectionState(ConnectionState.Phase.Backoff, outageStartedAtMs = 0)
+        advanceTimeBy(600)
+        runCurrent()
+        assertEquals(HomeConnectionStatus.Reconnecting, viewModel.uiState.value.connectionStatus)
+
+        connection.value = ConnectionState(ConnectionState.Phase.Connected)
+        runCurrent()
+        assertNull(viewModel.uiState.value.connectionStatus)
+
+        // Idle is "no subscription", not an outage.
+        connection.value = ConnectionState(ConnectionState.Phase.Idle)
+        advanceTimeBy(CONNECTION_REVEAL_MS * 2)
+        runCurrent()
+        assertNull(viewModel.uiState.value.connectionStatus)
+    }
+
+    @Test
+    fun `successful refresh records lastRefreshedAt and a failure keeps it`() = runTest {
+        val (viewModel, sessions) = buildViewModel()
+        advanceTimeBy(5_000)
+        viewModel.refresh()
+        val refreshed = viewModel.uiState.first { it.lastRefreshedAt != null && !it.isRefreshing }
+        assertEquals(5_000L, refreshed.lastRefreshedAt)
+
+        sessions.failRefresh = true
+        advanceTimeBy(60_000)
+        viewModel.refresh()
+        val offline = viewModel.uiState.first { it.isOffline }
+        assertEquals(5_000L, offline.lastRefreshedAt)
+    }
+
     @Test
     fun `reset clears machine and date filters while preserving search`() = runTest {
         val (viewModel, sessions) = buildViewModel()

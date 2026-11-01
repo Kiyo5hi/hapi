@@ -209,6 +209,17 @@
     <string name="sessions_filter_all">Все</string>
     <string name="sessions_filter_unknown_machine">Неизвестная машина</string>
     <string name="sessions_offline_banner">Офлайн — показаны кешированные сессии</string>
+    <string name="sessions_section_recent">Недавние</string>
+    <string name="sessions_status_connecting">Подключение…</string>
+    <string name="sessions_status_reconnecting">Переподключение…</string>
+    <string name="sessions_status_paused">Приостановлено</string>
+    <string name="sessions_offline_updated">Офлайн · обновлено %1$s</string>
+    <string name="sessions_offline_retry">Повторить</string>
+    <string name="sessions_action_mark_read">Отметить как прочитанное</string>
+    <string name="sessions_unread">Не прочитано</string>
+    <string name="sessions_presence_connected">Подключено</string>
+    <string name="sessions_presence_running">Выполняется</string>
+    <string name="sessions_error_mark_read">Не удалось отметить как прочитанное</string>
     <string name="sessions_search_hint">Поиск сессий</string>
     <string name="sessions_search_open">Поиск сессий</string>
     <string name="sessions_search_close">Закрыть поиск</string>

@@ -216,6 +216,17 @@
     <string name="sessions_filter_all">全部</string>
     <string name="sessions_filter_unknown_machine">未知机器</string>
     <string name="sessions_offline_banner">离线 — 显示缓存的会话</string>
+    <string name="sessions_section_recent">最近</string>
+    <string name="sessions_status_connecting">连接中…</string>
+    <string name="sessions_status_reconnecting">重连中…</string>
+    <string name="sessions_status_paused">已暂停</string>
+    <string name="sessions_offline_updated">离线 · %1$s更新</string>
+    <string name="sessions_offline_retry">重试</string>
+    <string name="sessions_action_mark_read">标为已读</string>
+    <string name="sessions_unread">未读</string>
+    <string name="sessions_presence_connected">已连接</string>
+    <string name="sessions_presence_running">运行中</string>
+    <string name="sessions_error_mark_read">标记已读失败</string>
     <string name="sessions_search_hint">搜索会话</string>
     <string name="sessions_search_open">搜索会话</string>
     <string name="sessions_search_close">关闭搜索</string>
