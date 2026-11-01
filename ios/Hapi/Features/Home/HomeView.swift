@@ -163,7 +163,6 @@ struct HomeView: View {
 
     private func openSession(_ sessionId: String) {
         if usesSplitNavigation {
-            listModel.onSessionOpened(sessionId)
             tabletNavigation.open(sessionId)
         } else if path.last != sessionId {
             path.append(sessionId)

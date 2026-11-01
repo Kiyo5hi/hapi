@@ -5806,19 +5806,19 @@
         }
       }
     },
-    "Marks %lld unread sessions as read on this device." : {
+    "Marks %lld unread sessions as read across your devices." : {
       "extractionState" : "manual",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Непрочитанные сессии на этом устройстве будут отмечены как прочитанные: %lld."
+            "value" : "Непрочитанные сессии на всех ваших устройствах будут отмечены как прочитанные: %lld."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这会将当前设备上的 %lld 个未读会话标记为已读。"
+            "value" : "这会将 %lld 个未读会话在各设备上标为已读。"
           }
         }
       }

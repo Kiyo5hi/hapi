@@ -32,6 +32,7 @@ Source: `hub/src/web/routes/sessions.ts`; shapes `SessionSchema` (`shared/src/sc
 | Method & path | Request | Response |
 |---|---|---|
 | `GET /api/sessions` | Query: `limit?` (1–500), `order?=updatedAt` | `{sessions: (SessionSummary & {futureScheduledMessageCount, nextScheduledAt})[]}` |
+| `PUT /api/sessions/:id/read-state` | `{type: "read", readRevision, expectedVersion}` or `{type: "unread", expectedVersion}` | `{status, contentRevision, readState}`; see [Read state](./read-state.md) |
 | `GET /api/sessions/:id` | — | `{session: Session}` (full record incl. `metadata`, `agentState`, `todos`, versions) |
 
 Default list order is `globalPinned` → `pinned` →
@@ -43,7 +44,7 @@ Agent output, prompt echoes, delivery acknowledgements, liveness and pending
 request counts do not change the default order. User-message deletion does
 not rewind the timestamp.
 `order=updatedAt` explicitly requests pure activity recency (e.g. peer discovery).
-`updatedAt` retains its activity/unread/date-filter semantics; `activeAt`
+`updatedAt` retains its activity/date-filter semantics; `activeAt`
 remains transport keep-alive state. The Web session list may
 apply client-side grouping and search ranking after receiving this response;
 `GET /api/sessions` itself has no text-search parameter. List badges come from

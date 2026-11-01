@@ -7,7 +7,7 @@
  * - No E2E encryption; data is stored as JSON in SQLite
  */
 
-import { isKnownFlavor, isLiveLifecycleState, isSteeringSupportedForSession, MACHINE_CAPABILITIES, type LocalResumeTarget, type ResumableSession, type SessionEndReason } from '@hapi/protocol'
+import { type SessionReadStateRequest, isKnownFlavor, isLiveLifecycleState, isSteeringSupportedForSession, MACHINE_CAPABILITIES, type LocalResumeTarget, type ResumableSession, type SessionEndReason } from '@hapi/protocol'
 import {
     cliBinaryUpdatedOnDisk,
     isMachineCapabilitySkewed,
@@ -598,6 +598,7 @@ export class SyncEngine {
             if (!this.getSession(event.sessionId)) {
                 this.sessionCache.refreshSession(event.sessionId)
             }
+            this.sessionCache.syncReadState(event.sessionId)
         }
 
         // Emit chat updates before ledger capture so SSE is not blocked on
@@ -736,6 +737,12 @@ export class SyncEngine {
 
     handleBackgroundTasks(sessionId: string, tasks: BackgroundTask[]): void {
         this.sessionCache.setBackgroundTasks(sessionId, tasks)
+    }
+
+    updateReadState(sessionId: string, namespace: string, request: SessionReadStateRequest) {
+        const result = this.store.sessions.updateReadState(sessionId, namespace, request)
+        if (result?.status === 'ok') this.sessionCache.syncReadState(sessionId)
+        return result
     }
 
     recordSessionActivity(sessionId: string, updatedAt: number): void {

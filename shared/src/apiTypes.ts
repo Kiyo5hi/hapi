@@ -125,6 +125,8 @@ export type SessionResponse = { session: Session }
 export type MessagesResponse = {
     messages: DecryptedMessage[]
     page: {
+        /** Readable revision covered by this tail snapshot; absent on history pages. */
+        readThroughRevision?: number
         direction: 'latest' | 'before' | 'after'
         limit: number
         epoch: number

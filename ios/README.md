@@ -606,7 +606,7 @@ TEST_RUNNER_HAPI_TOOL_CAPTURE=/tmp/hapi-tool-review \
 Home keeps a fixed Sessions title: hub switching on the leading edge,
 Filters and New Session on the trailing edge. The native menu offers an
 **Unread Only** lens, machine single-selection (two or more machines) and
-**Mark All as Read** (local watermarks, confirmed first); only applied filters
+**Mark All as Read** (shared read state, confirmed first); only applied filters
 add a summary line. The unread lens keeps the iPad's selected chat listed.
 The search field (`.searchable`) ranks matches with the web relevance rules
 (`SessionListSearch`: title, worktree, summary, agent, machine, path and id;
@@ -637,3 +637,7 @@ TEST_RUNNER_HAPI_HOME_CAPTURE=/tmp/hapi-home-review \
   with `CODE_SIGNING_ALLOWED=NO`.
 - CI uses the runner's default Xcode; each job prints `xcodebuild -version`
   first so failures are attributable to a toolchain bump.
+
+Unread state uses the hub’s [revision read-state contract](../docs/api/client-contract/read-state.md).
+Only a foreground transcript laid out at the latest tail acknowledges content.
+Local pending reads persist before the dot clears and retry when connectivity returns.

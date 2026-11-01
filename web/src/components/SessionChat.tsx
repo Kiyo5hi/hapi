@@ -586,6 +586,7 @@ function hasAbortableAgentRun(blocks: readonly ChatBlock[]): boolean {
 }
 
 type SessionChatProps = {
+    readThroughRevision?: number
     api: ApiClient
     titleSuggestionAvailable?: boolean
     session: Session
@@ -2098,6 +2099,7 @@ function SessionChatInner(props: SessionChatProps) {
                         onRewindConversation={controlledByUser ? undefined : onRewindConversation}
                         isLatestCompletedBoundary={isLatestCompletedBoundary}
                         onViewModeChange={props.onViewModeChange}
+                        readThroughRevision={!terminalVisible && props.viewMode === 'tail' ? props.readThroughRevision : undefined}
                         isSyncingTail={props.isSyncingTail}
                         messagesWarning={props.messagesWarning}
                         hasMoreMessages={props.hasMoreMessages}

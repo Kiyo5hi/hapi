@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SessionReadStateSchema } from './sessionReadState'
 import { COPILOT_AGENT_MODES, type CopilotAgentMode } from './copilotModes'
 import { CODEX_COLLABORATION_MODES, PERMISSION_MODES } from './modes'
 import { AgentConfigDescriptorSchema } from './agentConfig'
@@ -326,6 +327,7 @@ export const AttachmentMetadataSchema = z.object({
 export type AttachmentMetadata = z.infer<typeof AttachmentMetadataSchema>
 
 export const DecryptedMessageSchema = z.object({
+    contentRevision: z.number().int().nonnegative().safe().optional(),
     id: z.string(),
     seq: z.number().nullable(),
     localId: z.string().nullable(),
@@ -352,6 +354,8 @@ export const BackgroundTaskSchema = z.object({
 export type BackgroundTask = z.infer<typeof BackgroundTaskSchema>
 
 export const SessionSchema = z.object({
+    contentRevision: z.number().int().nonnegative().safe().optional(),
+    readState: SessionReadStateSchema.optional(),
     lastUserMessageAt: z.number().optional(),
     hasConversationContent: z.boolean().optional(),
     id: z.string(),
@@ -422,6 +426,8 @@ const VersionedTeamStatePatchSchema = z.object({
 })
 
 export const SessionPatchSchema = z.object({
+    contentRevision: z.number().int().nonnegative().safe().optional(),
+    readState: SessionReadStateSchema.optional(),
     lastUserMessageAt: z.number().optional(),
     active: z.boolean().optional(),
     thinking: z.boolean().optional(),
