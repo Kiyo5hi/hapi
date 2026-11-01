@@ -226,9 +226,13 @@ class SessionListViewModel(
      * this only kicks the explicit entry refresh (the snapshot may be stale
      * and a `resume: ok` handshake deliberately skips the REST resync).
      * Safe to call repeatedly.
+     *
+     * Silent: the screen is composed as soon as a predictive back gesture
+     * starts previewing it, so an indicator here would flash a spinner on
+     * every back swipe. The empty state covers a first load with no rows.
      */
     fun start() {
-        refresh()
+        refresh(showIndicator = false)
     }
 
     /** Screen exit. The hub-lifetime global pipe stays up by design. */
@@ -236,12 +240,19 @@ class SessionListViewModel(
         refreshJob?.cancel()
     }
 
-    /** Pull-to-refresh / initial load. Coalesces concurrent calls. */
-    fun refresh() {
+    /**
+     * Pull-to-refresh / retry (indicator shown) or entry load (silent).
+     * Coalesces concurrent calls; a user refresh joining a silent one in
+     * flight still shows the indicator until it settles.
+     */
+    fun refresh(showIndicator: Boolean = true) {
         refreshTimeZone()
-        if (refreshJob?.isActive == true) return
+        if (refreshJob?.isActive == true) {
+            if (showIndicator) isRefreshing.value = true
+            return
+        }
         refreshJob = scope.launch {
-            isRefreshing.value = true
+            if (showIndicator) isRefreshing.value = true
             try {
                 // Only a failed *sessions* fetch means "offline". Machines and
                 // other stores are secondary: their failures must not

@@ -18,6 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -35,6 +36,8 @@ private class FakeSessionStore : SessionListStore {
     override val sessions: StateFlow<List<SessionSummary>> = backing
     val calls = MutableStateFlow<List<String>>(emptyList())
     var failRefresh = false
+    /** When set, `refresh()` suspends until it completes. */
+    var refreshGate: CompletableDeferred<Unit>? = null
 
     fun set(vararg rows: SessionSummary) {
         backing.value = sortSessionSummaries(rows.toList())
@@ -46,6 +49,7 @@ private class FakeSessionStore : SessionListStore {
 
     override suspend fun refresh() {
         record("refresh")
+        refreshGate?.await()
         if (failRefresh) throw RuntimeException("offline")
     }
 
@@ -422,6 +426,25 @@ class SessionListViewModelTest {
         viewModel.start()
         sessions.calls.first { "refresh" in it }
         assertFalse("fullResync" in sessions.calls.value)
+        viewModel.stop()
+    }
+
+    @Test
+    fun `entry refresh is silent so predictive back never flashes the indicator`() = runTest {
+        val (viewModel, sessions, _) = buildViewModel()
+        val gate = CompletableDeferred<Unit>()
+        sessions.refreshGate = gate
+        viewModel.start()
+        sessions.calls.first { "refresh" in it }
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isRefreshing)
+
+        // A pull joining the in-flight entry refresh still shows the indicator.
+        viewModel.refresh()
+        viewModel.uiState.first { it.isRefreshing }
+        gate.complete(Unit)
+        viewModel.uiState.first { !it.isRefreshing && it.lastRefreshedAt != null }
+        assertEquals(listOf("refresh"), sessions.calls.value)
         viewModel.stop()
     }
 
