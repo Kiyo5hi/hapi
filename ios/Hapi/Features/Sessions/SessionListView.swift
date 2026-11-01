@@ -12,9 +12,9 @@ import SwiftUI
 /// - pinned section first (the sort already puts globalPinned/pinned rows on
 ///   top; a header makes the boundary visible);
 /// - per row: a two-line-tall flavor icon whose presence badge marks
-///   connected sessions (pulsing while running); title with trailing relative
-///   `updatedAt` and an optional unread dot; a quiet second line has project
-///   left and an attention symbol right. No preview, task progress,
+///   connected sessions (pulsing while running); title with trailing
+///   relative `updatedAt` (unread: semibold title + accent time, no dot so
+///   the badge stays the only dot); a quiet second line has project left and an attention symbol right. No preview, task progress,
 ///   machine/path details or spinners. Disconnected rows are not dimmed;
 /// - swipe actions: leading pin/mark-read, trailing archive or delete/reopen;
 /// - long-press context menu → rename, pin (none/project/global), then
@@ -153,6 +153,9 @@ struct SessionListView: View {
             }
         }
         .listStyle(.plain)
+        // The default plain header height leaves a blank band between
+        // Pinned and Recent; headers size to their compact text instead.
+        .environment(\.defaultMinListHeaderHeight, 0)
         // An explicit filter change starts at the top. SSE/count/name changes
         // keep this identity (and the reading position), as does chat return.
         .id(model.filters)
@@ -202,7 +205,7 @@ struct SessionListView: View {
             .font(.footnote.weight(.semibold))
             .foregroundStyle(theme.textSecondary)
             .textCase(nil)
-            .padding(.top, 8)
+            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
     }
 
     /// Leading swipe: the quick toggles (pin, read), as in Mail.
@@ -374,6 +377,7 @@ struct SessionRowView: View {
         // Separators start under the text column, as in Mail and Messages.
         .alignmentGuide(.listRowSeparatorLeading) { _ in iconSize + iconSpacing }
         .accessibilityElement(children: .combine)
+        .accessibilityValue(row.unread ? Text("Unread") : Text(verbatim: ""))
         .accessibilityIdentifier("home.session.\(row.id)")
     }
 
@@ -409,23 +413,14 @@ struct SessionRowView: View {
                 .foregroundStyle(theme.textPrimary)
                 .lineLimit(1)
             Spacer(minLength: 4)
-            HStack(spacing: 6) {
-                Text(verbatim: formatRelativeAge(now: now, thenEpochMs: row.summary.updatedAt))
-                    .font(.footnote)
-                    .foregroundStyle(theme.textSecondary)
-                    .monospacedDigit()
-                    .fixedSize()
-                // Unread dots always occupy the trailing edge. Read rows
-                // remove the slot so the timestamp itself aligns right.
-                if row.unread {
-                    Circle()
-                        .fill(theme.accent)
-                        .frame(width: 8, height: 8)
-                        .frame(width: 12)
-                        .accessibilityLabel("Unread")
-                }
-            }
-            .fixedSize()
+            // Unread is a semibold title plus an accent timestamp, not a
+            // dot: the presence badge is the row's only dot.
+            Text(verbatim: formatRelativeAge(now: now, thenEpochMs: row.summary.updatedAt))
+                .font(.footnote)
+                .fontWeight(row.unread ? .semibold : .regular)
+                .foregroundStyle(row.unread ? theme.accent : theme.textSecondary)
+                .monospacedDigit()
+                .fixedSize()
         }
     }
 

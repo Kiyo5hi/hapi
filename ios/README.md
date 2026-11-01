@@ -365,9 +365,10 @@ columns, folded collapses to the phone stack without recreating the chat. Other
 iPhones keep their single `NavigationStack`. The phone-width session list puts
 Settings on the leading edge and the filter on the trailing edge; on iOS 26+
 New Session sits beside the bottom search field (as in Messages), while iOS
-17/18 keeps it in the top bar. A side-by-side sidebar drops its inline
-"Sessions" title, keeps search at its top and moves the filter beside
-Settings, because the system sidebar toggle shares the trailing edge. On the
+17/18 keeps it in the top bar. The list uses a large "Sessions" title that
+collapses on scroll. A side-by-side sidebar drops that title, keeps search at
+its top and moves the filter beside Settings, because the system sidebar
+toggle shares the trailing edge. On the
 folded Duo's 678pt outer screen the system moves Back and toolbar actions into
 a vertical side bar, so
 the session list drops its "Sessions" title (the empty top bar disappears) and
