@@ -316,6 +316,9 @@ struct ChatView: View {
         .onChange(of: scenePhase) {
             if scenePhase != .active { model.resetDisplayedReadReceipt() }
         }
+        .onChange(of: scenePhase == .active && model.followsReadableTail, initial: true) { _, following in
+            model.setTailFollowing(following)
+        }
     }
 
     private var exportPromptTitle: Text {

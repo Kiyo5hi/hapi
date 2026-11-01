@@ -244,8 +244,9 @@ final class SessionListModel {
     /// Content not yet read by a client in this namespace.
     var unreadCount: Int {
         let readState = lastSeenStore.state
+        let followedTails = lastSeenStore.followedTails
         return sessionStore.sessions.filter {
-            LastSeenStore.isUnread($0, state: readState)
+            LastSeenStore.isUnread($0, state: readState, followedTails: followedTails)
         }.count
     }
 
@@ -291,6 +292,7 @@ final class SessionListModel {
     /// sections kept so the Pinned header still applies).
     var rows: [SessionRowUI] {
         let readState = lastSeenStore.state
+        let followedTails = lastSeenStore.followedTails
         let activeFilter = activeMachineFilter
         var visible = sessionStore.sessions.filter { summary in
             guard let activeFilter else { return true }
@@ -299,7 +301,7 @@ final class SessionListModel {
         if filters.unreadOnly {
             visible = visible.filter { summary in
                 summary.id == selectedSessionId
-                    || LastSeenStore.isUnread(summary, state: readState)
+                    || LastSeenStore.isUnread(summary, state: readState, followedTails: followedTails)
             }
         }
         if isSearching {
@@ -316,7 +318,7 @@ final class SessionListModel {
                 title: Self.sessionTitle(summary),
                 project: Self.projectLabel(summary),
                 flavor: summary.metadata?.flavor,
-                unread: LastSeenStore.isUnread(summary, state: readState)
+                unread: LastSeenStore.isUnread(summary, state: readState, followedTails: followedTails)
             )
         }
     }

@@ -142,7 +142,7 @@ describe('SessionRowSummary background status', () => {
         expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('New activity')
     })
 
-    it('shows an explicit unread dot before the thinking spinner', () => {
+    it('keeps the thinking spinner beside an explicit unread dot', () => {
         const session = makeSummary({
             id: 'selected-thinking-unread',
             thinking: true,
@@ -151,7 +151,7 @@ describe('SessionRowSummary background status', () => {
         markSessionSeen(session.id, 2_000)
         markSessionUnread(session.id)
 
-        render(
+        const { container } = render(
             <I18nProvider>
                 <SessionRowSummary
                     session={session}
@@ -163,6 +163,21 @@ describe('SessionRowSummary background status', () => {
         )
 
         expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('New activity')
+        expect(container.querySelector('svg.animate-spin-slow.text-\\[var\\(--app-badge-success-text\\)\\]')).not.toBeNull()
+    })
+
+    it('shows unseen output from a running session without hiding its spinner', () => {
+        const session = makeSummary({ id: 'running-unread', backgroundTaskCount: 1, updatedAt: 2_000 })
+        markSessionSeen(session.id, 1_000)
+
+        const { container } = render(
+            <I18nProvider>
+                <SessionRowSummary session={session} showDetailedStatus={true} lastSeenVersion={0} />
+            </I18nProvider>
+        )
+
+        expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('New activity')
+        expect(container.querySelector('svg.animate-spin-slow.text-blue-400')).not.toBeNull()
     })
 })
 

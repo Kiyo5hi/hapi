@@ -162,19 +162,28 @@ export function SessionRowSummary(props: {
                     >
                         {sessionName}
                     </div>
-                    {attention?.kind === 'unread' && nestedTooltips && attentionId ? (
-                        <SessionAttentionIndicator
-                            attention={attention}
-                            summary={s}
-                            label={attentionLabel ?? ''}
-                            tooltipId={attentionId}
-                        />
-                    ) : attention?.kind === 'unread' ? (
-                        <span
-                            className={`inline-flex h-2 w-2 shrink-0 rounded-full ${ATTENTION_DOT_CLASS.unread}`}
-                            title={attentionLabel ?? undefined}
-                            aria-label={attentionLabel ?? undefined}
-                        />
+                    {attention?.kind === 'unread' ? (
+                        <>
+                            {s.active && s.thinking ? (
+                                <SessionSpinner />
+                            ) : s.active && (s.backgroundTaskCount ?? 0) > 0 ? (
+                                <SessionSpinner background />
+                            ) : null}
+                            {nestedTooltips && attentionId ? (
+                                <SessionAttentionIndicator
+                                    attention={attention}
+                                    summary={s}
+                                    label={attentionLabel ?? ''}
+                                    tooltipId={attentionId}
+                                />
+                            ) : (
+                                <span
+                                    className={`inline-flex h-2 w-2 shrink-0 rounded-full ${ATTENTION_DOT_CLASS.unread}`}
+                                    title={attentionLabel ?? undefined}
+                                    aria-label={attentionLabel ?? undefined}
+                                />
+                            )}
+                        </>
                     ) : s.active && s.thinking ? (
                         <SessionSpinner />
                     ) : urgentAttention && nestedTooltips && attentionId ? (
