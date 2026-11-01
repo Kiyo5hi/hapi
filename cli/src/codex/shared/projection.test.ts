@@ -6,8 +6,48 @@ import type { ApiSessionClient } from '@/api/apiSession';
 import { SharedCodexProjection, inputText } from './projection';
 import { codexPlanProposalId } from './plan';
 import { extractNotifySummary } from '@hapi/protocol/messages';
+import { asyncQuestionsForItem } from './asyncQuestions';
 
 describe('shared history projection', () => {
+    it('displays async answers as readable user messages while preserving native IDs', async () => {
+        const sendUserMessage = vi.fn(); const committed = vi.fn(async () => {});
+        const observe = vi.fn();
+        const session = { getMetadata: () => ({}), updateMetadata: vi.fn(), sendUserMessage } as unknown as ApiSessionClient;
+        const projection = new SharedCodexProjection(session, 'thread', committed, undefined, undefined, observe);
+        const text = `<send_user_message_question_reply>\n${JSON.stringify([{
+            questionItemId: '["request_user_input_async","call_async",0]', question: 'Which client?', answer: 'Web'
+        }])}\n</send_user_message_question_reply>`;
+        const item = { type: 'userMessage', id: 'native-answer', clientId: 'client-answer', content: [{ type: 'text', text }] };
+        await projection.notification('item/completed', { threadId: 'thread', turnId: 'turn', item });
+        expect(observe).toHaveBeenCalledWith('thread', item);
+        expect(committed).toHaveBeenCalledWith('client-answer');
+        expect(sendUserMessage).toHaveBeenCalledWith('Which client?\nWeb', undefined, 'client-answer');
+    });
+    it.each([undefined, 'root'])('projects async questions as actionable cards, including active snapshots (parent: %s)', async parentThreadId => {
+        const send = vi.fn();
+        const observe = vi.fn();
+        const session = { getMetadata: () => ({}), sendAgentMessage: send } as unknown as ApiSessionClient;
+        const projection = new SharedCodexProjection(session, 'thread', async () => {}, parentThreadId, undefined, observe);
+        const item = { type: 'agentMessage', id: 'call_async', delivery: 'async', phase: 'final_answer',
+            text: 'Which client?\n- Web\n- Terminal', questions: [{ title: 'Which client?', options: ['Web', 'Terminal'] }] };
+        await projection.notification('item/started', { threadId: 'thread', turnId: 'turn', item });
+        expect(send).not.toHaveBeenCalled();
+        await projection.notification('item/completed', { threadId: 'thread', turnId: 'turn', item });
+        await projection.notification('item/completed', { threadId: 'thread', turnId: 'turn', item });
+        expect(send).toHaveBeenCalledOnce();
+        const question = asyncQuestionsForItem('thread', item)[0];
+        const body = parentThreadId ? send.mock.calls[0][0].message : send.mock.calls[0][0];
+        expect(body).toMatchObject({ type: 'tool-call', name: 'request_user_input', callId: question.id, input: question.input });
+        expect(observe).toHaveBeenCalledWith('thread', item);
+        const live = send.mock.calls.slice();
+        projection.reset(); send.mockClear();
+        await projection.history({ turns: [{ id: 'turn', status: 'inProgress', items: [item] }] });
+        expect(send.mock.calls).toEqual(live);
+        // Async notifications with no questions still render their ordinary text.
+        await projection.notification('item/completed', { threadId: 'thread', turnId: 'turn',
+            item: { ...item, id: 'update', text: 'Still working', questions: null } });
+        expect(parentThreadId ? send.mock.lastCall![0].message : send.mock.lastCall![0]).toMatchObject({ type: 'message', message: 'Still working' });
+    });
     it.each([undefined, 'root'])('projects command outcomes for live output and replay (parent: %s)', async parentThreadId => {
         const send = vi.fn();
         const session = { getMetadata: () => ({}), sendAgentMessage: send } as unknown as ApiSessionClient;
