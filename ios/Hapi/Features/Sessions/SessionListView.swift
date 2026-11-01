@@ -30,6 +30,8 @@ struct SessionListView: View {
     @State private var renameTarget: SessionRowUI?
     @State private var renameText = ""
     @State private var deleteTarget: SessionRowUI?
+    /// Rows kept while a pushed chat covers the list (see `sessionList`).
+    @State private var frozenRows: [SessionRowUI]?
 
     var body: some View {
         // Rows own their minute-tick age labels; the list itself only
@@ -112,8 +114,23 @@ struct SessionListView: View {
 
     // MARK: - List
 
+    /// Covered by a pushed chat, the list keeps its last rows: on a large
+    /// hub every streaming session would otherwise rebuild and diff
+    /// thousands of rows nobody sees (~80 ms main-thread stalls while
+    /// scrolling the chat). A side-by-side split never disappears and
+    /// stays live; returning refreshes once.
     private var sessionList: some View {
-        let rows = model.rows
+        let rows = frozenRows ?? model.rows
+        return KeyedContent(key: ListRenderKey(rows: rows, selectable: selection != nil,
+                                               theme: theme, filters: model.filters)) {
+            list(rows)
+        }
+        .equatable()
+        .onAppear { frozenRows = nil }
+        .onDisappear { frozenRows = model.rows }
+    }
+
+    private func list(_ rows: [SessionRowUI]) -> some View {
         let pinnedCount = SessionListModel.pinnedCount(of: rows)
         return List(selection: selection) {
             if pinnedCount > 0 {
@@ -172,7 +189,7 @@ struct SessionListView: View {
     /// each list change, so one streaming session cost O(all rows) per
     /// update. Rows compare only what they draw and skip unchanged content.
     private func equatableRow(_ row: SessionRowUI) -> some View {
-        SessionListRowCell(row: row, selectable: selection != nil, theme: theme) {
+        KeyedContent(key: RowRenderKey(row: row, selectable: selection != nil, theme: theme)) {
             rowCell(row)
         }
         .equatable()
@@ -366,19 +383,29 @@ struct SessionListView: View {
 
 // MARK: - Row
 
-/// Row content captures only stable references (the model, state setters,
-/// the open callback), so equal rows can keep their previous content.
-private struct SessionListRowCell<Content: View>: View, Equatable {
-    let row: SessionRowUI
-    let selectable: Bool
-    let theme: HapiTheme
+/// Re-renders `content` only when `key` changes. List and row content
+/// capture only stable references (the model, state setters, the open
+/// callback), so an equal key can keep the previous content.
+private struct KeyedContent<Key: Equatable, Content: View>: View, Equatable {
+    let key: Key
     @ViewBuilder let content: () -> Content
 
     var body: some View { content() }
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.row == rhs.row && lhs.selectable == rhs.selectable && lhs.theme == rhs.theme
-    }
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.key == rhs.key }
+}
+
+private struct RowRenderKey: Equatable {
+    let row: SessionRowUI
+    let selectable: Bool
+    let theme: HapiTheme
+}
+
+private struct ListRenderKey: Equatable {
+    let rows: [SessionRowUI]
+    let selectable: Bool
+    let theme: HapiTheme
+    let filters: SessionListFilters
 }
 
 struct SessionRowView: View {
